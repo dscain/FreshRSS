@@ -385,6 +385,12 @@ SQL;
 	 * @param numeric-string|list<numeric-string> $ids
 	 */
 	public function markFavorite(string|array $ids, bool $is_favorite = true): int|false {
+		// Hook: Allow extensions to handle or modify favorite operations
+		$hookResult = Minz_ExtensionManager::callHook(Minz_HookType::EntryDaoMarkFavorite, $ids, $is_favorite);
+		if ($hookResult !== null) {
+			return $hookResult;
+		}
+
 		if (!is_array($ids)) {
 			$ids = [$ids];
 		}
@@ -465,6 +471,12 @@ SQL;
 	 * @return int|false affected rows
 	 */
 	public function markRead(array|string $ids, bool $is_read = true): int|false {
+		// Hook: Allow extensions to handle or modify read operations
+		$hookResult = Minz_ExtensionManager::callHook(Minz_HookType::EntryDaoMarkRead, $ids, $is_read);
+		if ($hookResult !== null) {
+			return $hookResult;
+		}
+
 		if (is_array($ids)) {	//Many IDs at once
 			if (count($ids) < 6) {	//Speed heuristics
 				$affected = 0;

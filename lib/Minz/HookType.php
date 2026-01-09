@@ -14,6 +14,14 @@ enum Minz_HookType: string {
 	case EntryBeforeInsert = 'entry_before_insert';	// function(FreshRSS_Entry $entry) -> FreshRSS_Entry | null
 	case EntryBeforeAdd = 'entry_before_add';	// function(FreshRSS_Entry $entry) -> FreshRSS_Entry | null
 	case EntryBeforeUpdate = 'entry_before_update';	// function(FreshRSS_Entry $entry) -> FreshRSS_Entry | null
+	case EntryControllerBookmarkAction = 'entry_controller_bookmark_action';	// function(string $id, bool $is_favourite) -> mixed | null
+	case EntryControllerBookmarkActionPost = 'entry_controller_bookmark_action_post';	// function(array{...} $params) -> none
+	case EntryControllerBookmarkActionPre = 'entry_controller_bookmark_action_pre';	// function(array{...} $params) -> array | null
+	case EntryControllerReadAction = 'entry_controller_read_action';	// function(array $ids, bool $is_read) -> mixed | null
+	case EntryControllerReadActionPost = 'entry_controller_read_action_post';	// function(array{...} $params) -> none
+	case EntryControllerReadActionPre = 'entry_controller_read_action_pre';	// function(array{...} $params) -> array | null
+	case EntryDaoMarkFavorite = 'entry_dao_mark_favorite';	// function(string|array $ids, bool $is_favorite) -> int | false | null
+	case EntryDaoMarkRead = 'entry_dao_mark_read';	// function(string|array $ids, bool $is_read) -> int | false | null
 	case FeedBeforeActualize = 'feed_before_actualize';	// function(FreshRSS_Feed $feed) -> FreshRSS_Feed | null
 	case FeedBeforeInsert = 'feed_before_insert';	// function(FreshRSS_Feed $feed) -> FreshRSS_Feed | null
 	case FreshrssInit = 'freshrss_init';	// function() -> none
@@ -60,9 +68,19 @@ enum Minz_HookType: string {
 			case self::EntriesFavorite:
 			case self::EntryAutoRead:
 			case self::EntryAutoUnread:
+			case self::EntryControllerBookmarkAction:
+			case self::EntryControllerReadAction:
+			case self::EntryDaoMarkFavorite:
+			case self::EntryDaoMarkRead:
 			case self::SimplepieAfterInit:
 			case self::SimplepieBeforeInit:
 				return Minz_HookSignature::PassArguments;
+			case self::EntryControllerBookmarkActionPost:
+			case self::EntryControllerReadActionPost:
+				return Minz_HookSignature::OneToNone;
+			case self::EntryControllerBookmarkActionPre:
+			case self::EntryControllerReadActionPre:
+				return Minz_HookSignature::OneToOne;
 			default:
 				throw new \RuntimeException('The hook is not configured!');
 		}

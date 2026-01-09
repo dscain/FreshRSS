@@ -75,6 +75,20 @@ class FreshRSS_entry_Controller extends FreshRSS_ActionController {
 		$this->view->tagsForEntries = [];
 
 		$entryDAO = FreshRSS_Factory::createEntryDao();
+		$activityLogger = new FreshRSS_UserActivityLogger();
+
+		// Hook: Allow extensions to modify read action parameters
+		$hookParams = Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerReadActionPre, [
+			'get' => $get,
+			'id_max' => $id_max,
+			'is_read' => $is_read,
+			'search' => FreshRSS_Context::$search,
+			'state' => FreshRSS_Context::$state
+		]);
+		if (is_array($hookParams)) {
+			extract($hookParams, EXTR_OVERWRITE);
+		}
+
 		if (!Minz_Request::hasParam('id')) {
 			// No id, then it MUST be a POST request
 			if (!Minz_Request::isPost()) {
@@ -179,7 +193,19 @@ class FreshRSS_entry_Controller extends FreshRSS_ActionController {
 			} else {
 				$ids = [];
 			}
+
+			// Hook: Allow extensions to handle or modify read actions
+			$hookResult = Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerReadAction, $ids, $is_read);
+			if ($hookResult !== null) {
+				// Extension handled the action, skip default processing
+				return;
+			}
+
 			$entryDAO->markRead($ids, $is_read);
+			// Log read/unread actions for individual entries
+			foreach ($ids as $entryId) {
+				$activityLogger->logReadAction($entryId, $is_read);
+			}
 			$tagDAO = FreshRSS_Factory::createTagDao();
 			$tagsForEntries = $tagDAO->getTagsForEntries($ids) ?? [];
 			$tags = [];
@@ -188,6 +214,14 @@ class FreshRSS_entry_Controller extends FreshRSS_ActionController {
 			}
 			$this->view->tagsForEntries = $tags;
 		}
+
+		// Hook: Allow extensions to perform actions after read action
+		Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerReadActionPost, [
+			'get' => $get,
+			'ids' => $ids ?? [],
+			'is_read' => $is_read,
+			'result' => true
+		]);
 
 		if (!$this->ajax) {
 			if (Minz_Request::hasParam('order')) {
@@ -220,10 +254,37 @@ class FreshRSS_entry_Controller extends FreshRSS_ActionController {
 	public function bookmarkAction(): void {
 		$id = Minz_Request::paramString('id', plaintext: true);
 		$is_favourite = Minz_Request::paramTernary('is_favorite') ?? true;
+
+		// Hook: Allow extensions to modify bookmark action parameters
+		$hookParams = Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerBookmarkActionPre, [
+			'id' => $id,
+			'is_favourite' => $is_favourite
+		]);
+		if (is_array($hookParams)) {
+			extract($hookParams, EXTR_OVERWRITE);
+		}
+
 		if ($id != '' && ctype_digit($id)) {
+			// Hook: Allow extensions to handle or modify bookmark actions
+			$hookResult = Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerBookmarkAction, $id, $is_favourite);
+			if ($hookResult !== null) {
+				// Extension handled the action, skip default processing
+				return;
+			}
+
 			$entryDAO = FreshRSS_Factory::createEntryDao();
 			$entryDAO->markFavorite($id, $is_favourite);
+			// Log bookmark action
+			$activityLogger = new FreshRSS_UserActivityLogger();
+			$activityLogger->logBookmarkAction($id, $is_favourite);
 		}
+
+		// Hook: Allow extensions to perform actions after bookmark action
+		Minz_ExtensionManager::callHook(Minz_HookType::EntryControllerBookmarkActionPost, [
+			'id' => $id,
+			'is_favourite' => $is_favourite,
+			'result' => true
+		]);
 
 		if (!$this->ajax) {
 			Minz_Request::forward([
@@ -231,6 +292,23 @@ class FreshRSS_entry_Controller extends FreshRSS_ActionController {
 				'a' => 'index',
 			], true);
 		}
+	}
+
+	/**
+	 * This action logs when a user clicks on an external link.
+	 *
+	 * Parameter is:
+	 *   - id (entry ID)
+	 */
+	public function logExternalLinkAction(): void {
+		$id = Minz_Request::paramString('id', plaintext: true);
+		if ($id != '' && ctype_digit($id)) {
+			$activityLogger = new FreshRSS_UserActivityLogger();
+			$activityLogger->logExternalLinkClick($id);
+		}
+
+		// Return empty response for AJAX calls
+		exit;
 	}
 
 	/**

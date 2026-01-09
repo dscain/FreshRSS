@@ -75,4 +75,11 @@ class FreshRSS_Factory {
 			default => new FreshRSS_DatabaseDAO($username),
 		};
 	}
+
+	/**
+	 * @throws Minz_ConfigurationNamespaceException|Minz_PDOConnectionException
+	 */
+	public static function createUserActivityLogDao(?string $username = null): FreshRSS_UserActivityLogDAO {
+		return new FreshRSS_UserActivityLogDAO($username);
+	}
 }

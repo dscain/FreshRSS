@@ -98,6 +98,20 @@ CREATE TABLE IF NOT EXISTS `_entrytag` (
 	FOREIGN KEY ("id_entry") REFERENCES `_entry` ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE INDEX IF NOT EXISTS `_entrytag_id_entry_index` ON `_entrytag` ("id_entry");
+
+CREATE TABLE IF NOT EXISTS `_user_activity_log` (
+	"id" SERIAL PRIMARY KEY,
+	"user_id" INT NOT NULL,
+	"entry_id" BIGINT NOT NULL,
+	"action" VARCHAR(50) NOT NULL,
+	"timestamp" BIGINT NOT NULL,
+	"ip_address" VARCHAR(45),
+	"user_agent" TEXT,
+	FOREIGN KEY ("user_id") REFERENCES `_user` ("id") ON DELETE CASCADE,
+	FOREIGN KEY ("entry_id") REFERENCES `_entry` ("id") ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS `_user_activity_log_user_id_timestamp_index` ON `_user_activity_log` ("user_id", "timestamp");
+CREATE INDEX IF NOT EXISTS `_user_activity_log_entry_id_index` ON `_user_activity_log` ("entry_id");
 SQL;
 
 $GLOBALS['ALTER_TABLE_ENTRY_LAST_USER_MODIFIED'] = <<<'SQL'

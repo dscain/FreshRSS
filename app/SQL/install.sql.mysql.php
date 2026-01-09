@@ -109,6 +109,22 @@ CREATE TABLE IF NOT EXISTS `_entrytag` (	-- v1.12
 	INDEX (`id_entry`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ENGINE = INNODB;
+
+CREATE TABLE IF NOT EXISTS `_user_activity_log` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`user_id` INT NOT NULL,
+	`entry_id` BIGINT NOT NULL,
+	`action` VARCHAR(50) NOT NULL,
+	`timestamp` BIGINT NOT NULL,
+	`ip_address` VARCHAR(45),
+	`user_agent` TEXT,
+	PRIMARY KEY (`id`),
+	FOREIGN KEY (`user_id`) REFERENCES `_user`(`id`) ON DELETE CASCADE,
+	FOREIGN KEY (`entry_id`) REFERENCES `_entry`(`id`) ON DELETE CASCADE,
+	INDEX (`user_id`, `timestamp`),
+	INDEX (`entry_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+ENGINE = INNODB;
 SQL;
 
 $GLOBALS['ALTER_TABLE_ENTRY_LAST_USER_MODIFIED'] = <<<'SQL'

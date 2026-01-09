@@ -104,7 +104,7 @@ $today = @strtotime('today');
 							throw new Exception('Unexpected side effect!');	// Should never occur. Only for PHPStan
 						}
 					} ?>
-					<h1 class="title"><a target="_blank" rel="noreferrer" class="go_website" href="<?= $this->entry->link() ?>" title="<?= _t('conf.shortcut.see_on_website')?>"><?= $this->entry->title() ?></a></h1>
+					<h1 class="title"><a target="_blank" rel="noreferrer" class="go_website" href="<?= $this->entry->link() ?>" title="<?= _t('conf.shortcut.see_on_website')?>" data-entry-id="<?= $this->entry->id() ?>"><?= $this->entry->title() ?></a></h1>
 					<?php if (FreshRSS_Context::userConf()->show_author_date === 'h' || FreshRSS_Context::userConf()->show_author_date === 'b') { ?>
 					<div class="subtitle">
 						<?php if (FreshRSS_Context::userConf()->show_feed_name === 'a') { ?>
@@ -205,3 +205,25 @@ $today = @strtotime('today');
 			$this->partial('nav_entries');
 		}
 	}
+?>
+<script>
+// Log external link clicks
+document.addEventListener('DOMContentLoaded', function() {
+	document.getElementById('stream').addEventListener('click', function(e) {
+		const link = e.target.closest('.go_website');
+		if (link && link.hasAttribute('data-entry-id')) {
+			const entryId = link.getAttribute('data-entry-id');
+			// Send AJAX request to log the external link click
+			fetch('?c=entry&a=logExternalLink&id=' + encodeURIComponent(entryId), {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: '_csrf=' + encodeURIComponent(context.csrf) + '&ajax=1'
+			}).catch(function(error) {
+				console.error('Failed to log external link click:', error);
+			});
+		}
+	});
+});
+</script>

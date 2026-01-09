@@ -119,8 +119,6 @@ CREATE TABLE IF NOT EXISTS `_user_activity_log` (
 	`ip_address` VARCHAR(45),
 	`user_agent` TEXT,
 	PRIMARY KEY (`id`),
-	FOREIGN KEY (`user_id`) REFERENCES `_user`(`id`) ON DELETE CASCADE,
-	FOREIGN KEY (`entry_id`) REFERENCES `_entry`(`id`) ON DELETE CASCADE,
 	INDEX (`user_id`, `timestamp`),
 	INDEX (`entry_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
